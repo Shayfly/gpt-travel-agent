@@ -9,15 +9,8 @@ export default function Results() {
     // דוגמה לחיפוש טיסות תל אביב (TLV) ללונדון (LON) ל-7 ימים קדימה
     const origin = "TLV";
     const destination = "LON";
-    const depart_date = new Date();
-    depart_date.setDate(depart_date.getDate() + 7);
-    const formattedDate = depart_date.toISOString().split("T")[0];
 
-    // Travelpayouts API
-    const url = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates?origin=${origin}&destination=${destination}&departure_at=${formattedDate}&return_at=&unique=false&sorting=price&direct=false&currency=usd&limit=8&token=8349af28ce9d95c3ee1635cc7729cc09`;
-
-    setLoading(true);
-    fetch(url)
+    fetch(`/api/flights?origin=${origin}&destination=${destination}`)
       .then((res) => res.json())
       .then((data) => {
         setFlights(data.data || []);
