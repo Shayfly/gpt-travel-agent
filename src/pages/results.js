@@ -1,22 +1,56 @@
-import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 export default function Results() {
-  const router = useRouter();
-  const { origin, destination, depart, adults } = router.query;
+  const [flights, setFlights] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    // דוגמה לחיפוש טיסות תל אביב (TLV) ללונדון (LON) ל-7 ימים קדימה
+    const origin = "TLV";
+    const destination = "LON";
+    const depart_date = new Date();
+    depart_date.setDate(depart_date.getDate() + 7);
+    const formattedDate = depart_date.toISOString().split("T")[0];
+
+    // Travelpayouts API
+    const url = `https://api.travelpayouts.com/aviasales/v3/prices_for_dates?origin=${origin}&destination=${destination}&departure_at=${formattedDate}&return_at=&unique=false&sorting=price&direct=false&currency=usd&limit=8&token=8349af28ce9d95c3ee1635cc7729cc09`;
+
+    setLoading(true);
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        setFlights(data.data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError("שגיאה בחיפוש טיסות");
+        setLoading(false);
+      });
+  }, []);
 
   return (
-    <div style={{ maxWidth: 700, margin: "60px auto", textAlign: "center" }}>
-      <h2>תוצאות חיפוש טיסות</h2>
-      <div style={{ padding: 32, border: "1px solid #e0e0e0", borderRadius: 12, marginTop: 32 }}>
-        <p>מוצא: <b>{origin}</b></p>
-        <p>יעד: <b>{destination}</b></p>
-        <p>תאריך יציאה: <b>{depart}</b></p>
-        <p>מספר מבוגרים: <b>{adults}</b></p>
-        {/* בהמשך נוסיף כאן תוצאות API אמיתיות */}
-        <div style={{ marginTop: 40, color: "#aaa" }}>
-          <b>כאן יופיעו תוצאות חיפוש חיות ברגע שנחבר API!</b>
+    <div style={{ maxWidth: 800, margin: "60px auto", textAlign: "center" }}>
+      <h2>תוצאות חיפוש טיסות אמיתיות (Travelpayouts)</h2>
+      {loading && <p>טוען נתונים...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {flights.length > 0 ? (
+        <div>
+          {flights.map((flight, i) => (
+            <div key={i} style={{ border: "1px solid #eee", borderRadius: 10, padding: 22, margin: 22, textAlign: "right" }}>
+              <p>יציאה: <b>{flight.origin}</b> &rarr; <b>{flight.destination}</b></p>
+              <p>תאריך: {flight.departure_at?.slice(0, 10) || "-"}</p>
+              <p>מחיר: <b>{flight.value}$</b></p>
+              <a href={flight.link || "#"} target="_blank" rel="noopener noreferrer" style={{ color: "#0070f3", textDecoration: "underline", fontWeight: "bold" }}>
+                הזמן עכשיו (דרך Affiliate)
+              </a>
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        !loading && <p>לא נמצאו טיסות בתאריכים המבוקשים.</p>
+      )}
     </div>
   );
 }
